@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.pyc
+.env
+*.env
+venv/
+.venv/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# VSCode
+.vscode/
+scripts/
+
+# Rahasia
+gcs-credentials.json
+*.json 
+
+.DS_Store
+
+switch_env.bat
+env.prod
+.env.development

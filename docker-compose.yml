@@ -1,0 +1,29 @@
+#version: '3.8'
+
+services:
+  backend-dr-api:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app:/app/app
+      - ./gcs-credentials.json:/app/gcs-credentials.json:ro
+    env_file:
+      - .env
+    depends_on:
+      - db
+
+  db:
+    image: postgres:17
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=euis
+      - POSTGRES_DB=db_diabetic_retinophaty
+    ports:
+      - "5432:5432"
+
+volumes:
+  postgres_data:

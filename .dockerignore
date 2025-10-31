@@ -1,0 +1,28 @@
+# .dockerignore
+
+# Folder cache & lingkungan virtual
+__pycache__/
+*.pyc
+venv/
+.venv/
+*.pem
+*.key
+
+# File sensitif
+.env
+.env.*
+!.env.example
+
+# Local database file (jika menggunakan SQLite untuk tes)
+sql_app.db
+
+# Folder Git
+
+.git
+.gitignore
+
+# File spesifik OS
+.DS_Store
+scripts/
+env.prod
+.env.development
