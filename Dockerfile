@@ -11,7 +11,7 @@ ENV PYTHONUNBUFFERED=1 \
     PORT=8080
 
 # 3. Install compiler
-RUN apt-get update && apt-get install -y --no-install-recommendations \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
