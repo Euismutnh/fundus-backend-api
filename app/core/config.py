@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-from typing import List
+from typing import List, Optional
 import os
 
 class Settings(BaseSettings):
@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     
     # Google Cloud Storage
     GCS_BUCKET_NAME: str = ""
-    GOOGLE_APPLICATION_CREDENTIALS: str = "gcs-credentials.json"
+    GOOGLE_APPLICATION_CREDENTIALS: Optional[str] = None
     
     class Config:
         env_file = ".env"
