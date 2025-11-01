@@ -89,24 +89,7 @@ jobs:
             --max-instances=10 \
             --timeout=300 \
             --port=8080 \
-            --set-env-vars="PROJECT_NAME=Fundus AI Backend" \
-            --set-env-vars="API_V1_STR=/api/v1" \
-            --set-env-vars="DATABASE_URL=${{ secrets.DATABASE_URL }}" \
-            --set-env-vars="SECRET_KEY=${{ secrets.SECRET_KEY }}" \
-            --set-env-vars="ACCESS_TOKEN_EXPIRE_MINUTES=${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }}" \
-            --set-env-vars="REFRESH_TOKEN_EXPIRE_DAYS=${{ secrets.REFRESH_TOKEN_EXPIRE_DAYS }}" \
-            --set-env-vars="ADMIN_SECRET_KEY=${{ secrets.ADMIN_SECRET_KEY }}" \
-            --set-env-vars="ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }}" \
-            --set-env-vars="ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}" \
-            --set-env-vars="SMTP_SERVER=smtp.gmail.com" \
-            --set-env-vars="SMTP_PORT=587" \
-            --set-env-vars="SMTP_USERNAME=${{ secrets.SMTP_USERNAME }}" \
-            --set-env-vars="SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }}" \
-            --set-env-vars="SENDER_EMAIL=${{ secrets.SMTP_USERNAME }}" \
-            --set-env-vars="AI_SERVICE_URL=https://fundus-api-service-165772118694.asia-southeast2.run.app" \
-            --set-env-vars="GCS_BUCKET_NAME=${{ secrets.GCS_BUCKET_NAME }}" \
-            --set-env-vars="ENVIRONMENT=production" \
-            --update-env-vars="GOOGLE_APPLICATION_CREDENTIALS="
+            --set-env-vars="^##^PROJECT_NAME=Fundus AI Backend##API_V1_STR=/api/v1##DATABASE_URL=${{ secrets.DATABASE_URL }}##SECRET_KEY=${{ secrets.SECRET_KEY }}##ACCESS_TOKEN_EXPIRE_MINUTES=${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }}##REFRESH_TOKEN_EXPIRE_DAYS=${{ secrets.REFRESH_TOKEN_EXPIRE_DAYS }}##ADMIN_SECRET_KEY=${{ secrets.ADMIN_SECRET_KEY }}##ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }}##ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}##SMTP_SERVER=smtp.gmail.com##SMTP_PORT=587##SMTP_USERNAME=${{ secrets.SMTP_USERNAME }}##SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }}##SENDER_EMAIL=${{ secrets.SMTP_USERNAME }}##AI_SERVICE_URL=https://fundus-api-service-165772118694.asia-southeast2.run.app##GCS_BUCKET_NAME=${{ secrets.GCS_BUCKET_NAME }}##ENVIRONMENT=production##GOOGLE_APPLICATION_CREDENTIALS="
           
           echo "✅ Deployment completed successfully"
 
