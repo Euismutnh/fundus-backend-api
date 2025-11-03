@@ -42,4 +42,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 
 # 10. Run application (PERUBAHAN 2)
 #     Kita panggil 'app.main:app'
-CMD ["exec", "gunicorn", "-b", "0.0.0.0:${PORT}", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "main:app"]
+CMD exec gunicorn -b "0.0.0.0:${PORT}" -w 4 -k uvicorn.workers.UvicornWorker app.main:app
