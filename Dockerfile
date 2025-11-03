@@ -26,7 +26,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # 6. Copy application code
 #    PERUBAHAN 1: Kita hanya copy folder 'app'
 #    Baris 'COPY main.py .' sudah dihapus.
-COPY ./app ./app
+COPY ./app .
 
 # 7. Buat non-root user untuk security
 RUN useradd -m -u 1000 appuser && \
@@ -42,4 +42,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 
 # 10. Run application (PERUBAHAN 2)
 #     Kita panggil 'app.main:app'
-CMD exec gunicorn -b "0.0.0.0:${PORT}" -w 4 -k uvicorn.workers.UvicornWorker app.main:app
+CMD ["exec", "gunicorn", "-b", "0.0.0.0:${PORT}", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "main:app"]
