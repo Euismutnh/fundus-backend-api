@@ -7,7 +7,14 @@ from app.models.fundus_image import FundusImage
 from app.models.detection import Detection
 from app.models.token_blacklist import TokenBlacklist
 from app.core.config import settings
+import os
 
+# 1. Dapatkan path dari file ini (admin.py)
+_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# 2. Keluar satu level (ke folder 'core'), lalu keluar lagi (ke folder 'app')
+_APP_DIR = os.path.dirname(_BASE_DIR)
+# 3. Gabungkan dengan folder 'templates/admin'
+TEMPLATES_DIR = os.path.join(_APP_DIR, "templates/admin")
 
 # -----------------------------
 # User Admin Configuration
