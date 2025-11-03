@@ -26,7 +26,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # 6. Copy application code
 #    PERUBAHAN 1: Kita hanya copy folder 'app'
 #    Baris 'COPY main.py .' sudah dihapus.
-COPY ./app .
+COPY ./app ./app
 
 # 7. Buat non-root user untuk security
 RUN useradd -m -u 1000 appuser && \
