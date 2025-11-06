@@ -31,15 +31,10 @@ class GCSService:
                 self.client = storage.Client()
                 logger.info("✅ GCS Service initialized with runtime credentials (CLOUD RUN MODE)")
                 
-            elif settings.GOOGLE_APPLICATION_CREDENTIALS:
+            elif settings.GOOGLE_APPLICATION_CREDENTIALS and os.path.exists(settings.GOOGLE_APPLICATION_CREDENTIALS):
                 # Local development mode with credentials file
-                logger.info(f"🔑 GCS: Using credentials file: {settings.GOOGLE_APPLICATION_CREDENTIALS}")
-                
-                # Verify file exists
-                if not os.path.exists(settings.GOOGLE_APPLICATION_CREDENTIALS):
-                    raise FileNotFoundError(
-                        f"GCS credentials file not found: {settings.GOOGLE_APPLICATION_CREDENTIALS}"
-                    )
+                # ⚠️ DOUBLE CHECK: Variable ada DAN file exist
+                logger.info(f"🔒 GCS: Using credentials file: {settings.GOOGLE_APPLICATION_CREDENTIALS}")
                 
                 # Load credentials from JSON file
                 credentials = service_account.Credentials.from_service_account_file(
@@ -57,7 +52,7 @@ class GCSService:
             # Initialize bucket
             self.bucket = self.client.bucket(settings.GCS_BUCKET_NAME)
             
-            # Verify bucket exists
+            # Verify bucket exists (optional but recommended)
             if not self.bucket.exists():
                 raise ValueError(f"GCS bucket does not exist: {settings.GCS_BUCKET_NAME}")
             
@@ -76,7 +71,16 @@ class GCSService:
             raise RuntimeError(f"Failed to initialize GCS service: {str(e)}")
     
     def _generate_unique_filename(self, original_filename: Optional[str], folder: str = "") -> str:
-        """Generate unique filename with UUID prefix"""
+        """
+        Generate unique filename with UUID prefix
+        
+        Args:
+            original_filename: Original file name (to preserve extension)
+            folder: Optional folder path prefix
+            
+        Returns:
+            Unique filename with format: {uuid}{extension}
+        """
         file_extension = os.path.splitext(original_filename or "default.png")[1]
         unique_id = str(uuid.uuid4())
         filename = f"{unique_id}{file_extension}"
@@ -86,32 +90,62 @@ class GCSService:
         return filename
     
     def _validate_image_file(self, file: UploadFile) -> bool:
-        """Validate if uploaded file is an image"""
-        allowed_types = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"]
+        """
+        Validate if uploaded file is an image
+        
+        Args:
+            file: FastAPI UploadFile object
+            
+        Returns:
+            True if valid image, False otherwise
+        """
+        allowed_types = [
+            "image/jpeg", 
+            "image/jpg", 
+            "image/png", 
+            "image/gif", 
+            "image/webp"
+        ]
         return file.content_type in allowed_types
     
     async def upload_profile_photo(self, file: UploadFile, user_id: int) -> Tuple[str, str]:
         """
         Upload profile photo to GCS
-        Returns: (file_url, filename)
+        
+        Args:
+            file: Profile photo file
+            user_id: User ID for folder organization
+            
+        Returns:
+            Tuple of (file_url, filename)
+            
+        Raises:
+            HTTPException: If validation fails or upload fails
         """
+        # Validate file type
         if not self._validate_image_file(file):
             raise HTTPException(
                 status_code=400, 
-                detail="Invalid file type. Only images are allowed."
+                detail="Invalid file type. Only images (JPEG, PNG, GIF, WebP) are allowed."
             )
         
-        # Check file size (max 2MB)
+        # Read file content
         file_content = await file.read()
-        if len(file_content) > 2 * 1024 * 1024:  # 2MB
+        
+        # Check file size (max 2MB)
+        max_size = 2 * 1024 * 1024  # 2MB
+        if len(file_content) > max_size:
             raise HTTPException(
                 status_code=400,
-                detail="File size too large. Maximum size is 2MB."
+                detail=f"File size too large. Maximum size is 2MB. Your file: {len(file_content) / (1024*1024):.2f}MB"
             )
         
         try:
             # Generate unique filename in profile_photos folder
-            filename = self._generate_unique_filename(file.filename, f"profile_photos/user_{user_id}")
+            filename = self._generate_unique_filename(
+                file.filename, 
+                f"profile_photos/user_{user_id}"
+            )
             
             # Upload to GCS
             blob = self.bucket.blob(filename)
@@ -120,12 +154,13 @@ class GCSService:
                 content_type=file.content_type or "application/octet-stream"
             )
             
-            # Make blob publicly accessible (if needed)
+            # Optional: Make blob publicly accessible
+            # Uncomment if your bucket is not already public
             # blob.make_public()
             
             # Return public URL and filename
             file_url = blob.public_url
-            logger.info(f"✅ Profile photo uploaded: {filename}")
+            logger.info(f"✅ Profile photo uploaded: {filename} (size: {len(file_content)} bytes)")
             
             return file_url, filename
             
@@ -144,20 +179,34 @@ class GCSService:
     ) -> Tuple[str, str]:
         """
         Upload fundus image to GCS
-        Returns: (file_url, filename)
+        
+        Args:
+            file: Fundus image file
+            user_id: User ID for folder organization
+            patient_code: Patient code for folder organization
+            
+        Returns:
+            Tuple of (file_url, filename)
+            
+        Raises:
+            HTTPException: If validation fails or upload fails
         """
+        # Validate file type
         if not self._validate_image_file(file):
             raise HTTPException(
                 status_code=400,
-                detail="Invalid file type. Only images are allowed."
+                detail="Invalid file type. Only images (JPEG, PNG, GIF, WebP) are allowed."
             )
         
-        # Check file size (max 5MB for fundus images)
+        # Read file content
         file_content = await file.read()
-        if len(file_content) > 5 * 1024 * 1024:  # 5MB
+        
+        # Check file size (max 5MB for fundus images)
+        max_size = 5 * 1024 * 1024  # 5MB
+        if len(file_content) > max_size:
             raise HTTPException(
                 status_code=400,
-                detail="File size too large. Maximum size is 5MB."
+                detail=f"File size too large. Maximum size is 5MB. Your file: {len(file_content) / (1024*1024):.2f}MB"
             )
         
         try:
@@ -172,12 +221,13 @@ class GCSService:
                 content_type=file.content_type or "application/octet-stream"
             )
             
-            # Make blob publicly accessible (if needed)
+            # Optional: Make blob publicly accessible
+            # Uncomment if your bucket is not already public
             # blob.make_public()
             
             # Return public URL and filename
             file_url = blob.public_url
-            logger.info(f"✅ Fundus image uploaded: {filename}")
+            logger.info(f"✅ Fundus image uploaded: {filename} (size: {len(file_content)} bytes)")
             
             return file_url, filename
             
@@ -189,9 +239,18 @@ class GCSService:
             )
     
     def delete_file(self, filename: str) -> bool:
-        """Delete file from GCS"""
+        """
+        Delete file from GCS
+        
+        Args:
+            filename: Full path to file in bucket
+            
+        Returns:
+            True if deleted successfully, False if file not found
+        """
         try:
             blob = self.bucket.blob(filename)
+            
             if blob.exists():
                 blob.delete()
                 logger.info(f"✅ File deleted: {filename}")
@@ -199,22 +258,55 @@ class GCSService:
             else:
                 logger.warning(f"⚠️ File not found for deletion: {filename}")
                 return False
+                
         except Exception as e:
             logger.error(f"❌ Failed to delete file {filename}: {str(e)}")
             return False
     
     def get_file_url(self, filename: str) -> Optional[str]:
-        """Get public URL for a file"""
+        """
+        Get public URL for a file
+        
+        Args:
+            filename: Full path to file in bucket
+            
+        Returns:
+            Public URL if file exists, None otherwise
+        """
         try:
             blob = self.bucket.blob(filename)
+            
             if blob.exists():
                 return blob.public_url
-            return None
+            else:
+                logger.warning(f"⚠️ File not found: {filename}")
+                return None
+                
         except Exception as e:
             logger.error(f"❌ Failed to get file URL for {filename}: {str(e)}")
             return None
+    
+    def file_exists(self, filename: str) -> bool:
+        """
+        Check if file exists in GCS
+        
+        Args:
+            filename: Full path to file in bucket
+            
+        Returns:
+            True if file exists, False otherwise
+        """
+        try:
+            blob = self.bucket.blob(filename)
+            return blob.exists()
+        except Exception as e:
+            logger.error(f"❌ Failed to check file existence for {filename}: {str(e)}")
+            return False
 
-# Create global GCS service instance
+
+# ============================================
+# Global GCS Service Instance
+# ============================================
 try:
     gcs_service = GCSService()
     logger.info("🎉 GCS Service initialization complete")
