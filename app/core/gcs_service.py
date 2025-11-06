@@ -100,11 +100,9 @@ class GCSService:
             True if valid image, False otherwise
         """
         allowed_types = [
-            "image/jpeg", 
+            "image/jpeg",
             "image/jpg", 
-            "image/png", 
-            "image/gif", 
-            "image/webp"
+            "image/png"
         ]
         return file.content_type in allowed_types
     
@@ -126,7 +124,7 @@ class GCSService:
         if not self._validate_image_file(file):
             raise HTTPException(
                 status_code=400, 
-                detail="Invalid file type. Only images (JPEG, PNG, GIF, WebP) are allowed."
+                detail="Invalid file type. Only images (JPG, PNG, JPEG) are allowed."
             )
         
         # Read file content
@@ -195,7 +193,7 @@ class GCSService:
         if not self._validate_image_file(file):
             raise HTTPException(
                 status_code=400,
-                detail="Invalid file type. Only images (JPEG, PNG, GIF, WebP) are allowed."
+                detail="Invalid file type. Only images (JPEG, PNG, JPEG) are allowed."
             )
         
         # Read file content
