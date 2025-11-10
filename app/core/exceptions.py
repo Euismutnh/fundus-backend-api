@@ -2,19 +2,42 @@ from fastapi import HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy.exc import IntegrityError
+from typing import Optional, Dict
 import logging
 
 logger = logging.getLogger(__name__)
 
 
 class AuthenticationError(HTTPException):
-    """Custom authentication error"""
-    def __init__(self, detail: str = "Authentication failed"):
+    """
+    Custom authentication error with support for custom headers
+    
+    Usage:
+        # Basic usage
+        raise AuthenticationError("Invalid credentials")
+        
+        # With custom headers (untuk frontend)
+        raise AuthenticationError(
+            detail="Token expired",
+            headers={"X-Token-Expired": "true"}
+        )
+    """
+    def __init__(
+        self, 
+        detail: str = "Authentication failed",
+        headers: Optional[Dict[str, str]] = None
+    ):
+        # Merge default headers dengan custom headers
+        default_headers = {"WWW-Authenticate": "Bearer"}
+        if headers:
+            default_headers.update(headers)
+        
         super().__init__(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=detail,
-            headers={"WWW-Authenticate": "Bearer"}
+            headers=default_headers
         )
+
 
 class AuthorizationError(HTTPException):
     """Custom authorization error"""
@@ -24,6 +47,7 @@ class AuthorizationError(HTTPException):
             detail=detail
         )
 
+
 class ValidationError(HTTPException):
     """Custom validation error"""
     def __init__(self, detail: str = "Validation failed"):
@@ -31,6 +55,7 @@ class ValidationError(HTTPException):
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=detail
         )
+
 
 class DatabaseError(HTTPException):
     """Custom database error"""
@@ -44,7 +69,6 @@ class DatabaseError(HTTPException):
 async def validation_exception_handler(request: Request, exc: Exception):
     """Handle validation errors"""
     if isinstance(exc, RequestValidationError):
-        # Format ulang error untuk memastikan semuanya JSON serializable
         formatted_errors = []
         for error in exc.errors():
             formatted_errors.append({
@@ -58,7 +82,7 @@ async def validation_exception_handler(request: Request, exc: Exception):
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             content={
                 "detail": "Validation failed",
-                "errors": formatted_errors # <-- Gunakan error yang sudah diformat
+                "errors": formatted_errors
             }
         )
     raise exc
@@ -69,7 +93,6 @@ async def integrity_exception_handler(request: Request, exc: Exception):
     if isinstance(exc, IntegrityError):
         logger.error(f"Database integrity error: {str(exc)}")
 
-        # Check for common integrity violations
         msg = str(exc).lower()
         if "duplicate key" in msg:
             return JSONResponse(
@@ -86,7 +109,7 @@ async def integrity_exception_handler(request: Request, exc: Exception):
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 content={"detail": "Database operation failed"}
             )
-    raise exc   # lempar lagi kalau bukan IntegrityError
+    raise exc
 
 
 async def general_exception_handler(request: Request, exc: Exception):

@@ -5,10 +5,7 @@ from sqlalchemy.sql import func
 from app.database import Base
 
 class TokenBlacklist(Base):
-    """
-    Model untuk menyimpan token yang sudah di-logout (blacklisted).
-    Token yang ada di sini tidak bisa digunakan lagi untuk akses endpoint protected.
-    """
+
     __tablename__ = "token_blacklist"
     __table_args__ = {'schema': 'schema_retinophaty'}
 

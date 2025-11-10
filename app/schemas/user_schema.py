@@ -1,17 +1,26 @@
-from pydantic import BaseModel, EmailStr, field_validator, Field
+from pydantic import BaseModel, field_validator, Field
 from datetime import date, datetime
 from typing import Optional
-import re
-from app.core.utils import validate_email  # ← IMPORT validator dari utils
+
+# Import semua validator dari utils
+from app.core.utils import (
+    validate_email,
+    validate_phone_number,
+    validate_password_strength,
+    validate_date_of_birth,
+)
+
 
 class UserSignUpRequest(BaseModel):
     full_name: str = Field(..., min_length=2, max_length=255)
-    email: EmailStr
+    email: str = Field(
+        ..., min_length=3, max_length=255
+    )  # Plain string, bukan EmailStr
     password: str = Field(..., min_length=8, max_length=100)
     phone_number: Optional[str] = None
     profession: Optional[str] = Field(None, max_length=100)
     date_of_birth: Optional[date] = None
-    
+
     # Address fields
     province_name: Optional[str] = Field(None, max_length=100)
     city_name: Optional[str] = Field(None, max_length=100)
@@ -20,102 +29,139 @@ class UserSignUpRequest(BaseModel):
     detailed_address: Optional[str] = None
     assignment_location: Optional[str] = Field(None, max_length=255)
 
-    @field_validator('email')
+    @field_validator("email")
     def validate_email_format(cls, v):
-        """Custom email validation with strict rules"""
+        """
+        Validate email dengan custom rules yang ketat
+        Mendukung email perusahaan (e.g., user@company.co.id)
+        """
         if not validate_email(v):
-            raise ValueError('Invalid email format. Please provide a valid email address.')
+            raise ValueError(
+                "Invalid email format. Email must have valid format "
+                "(e.g., user@example.com, admin@company.co.id)"
+            )
         return v.lower().strip()  # Normalize: lowercase & remove whitespace
 
-    @field_validator('phone_number')
-    def validate_phone_number(cls, v):
+    @field_validator("phone_number")
+    def validate_phone(cls, v):
+        """Validate Indonesian phone number (08xxxxxxxxxx)"""
         if v is None:
             return v
-        # Indonesian phone number validation (starts with 08, 10-15 digits)
-        if not re.match(r'^08\d{8,13}$', v):
-            raise ValueError('Phone number must start with 08 and be 10-15 digits long')
+
+        if not validate_phone_number(v):
+            raise ValueError(
+                "Invalid phone number. Must start with 08 and be 10-15 digits long "
+                "(e.g., 08123456789)"
+            )
         return v
 
-    @field_validator('password')
+    @field_validator("password")
     def validate_password(cls, v):
-        if len(v) < 8:
-            raise ValueError('Password must be at least 8 characters long')
-        if not re.search(r'[A-Za-z]', v):
-            raise ValueError('Password must contain at least one letter')
-        if not re.search(r'\d', v):
-            raise ValueError('Password must contain at least one number')
+        """Validate password strength dengan requirements lengkap"""
+        result = validate_password_strength(v)
+
+        if not result["is_valid"]:
+            # Gabungkan semua error messages
+            error_message = ". ".join(result["errors"])
+            raise ValueError(error_message)
+
+        return v
+
+    @field_validator("date_of_birth")
+    def validate_dob(cls, v):
+        """Validate date of birth (opsional, tapi kalau ada harus valid)"""
+        if v is None:
+            return v
+
+        result = validate_date_of_birth(v)
+        if not result["is_valid"]:
+            raise ValueError(result["error"])
+
         return v
 
 
 class UserSignInRequest(BaseModel):
-    email: EmailStr
-    password: str
+    email: str = Field(..., min_length=3, max_length=255)
+    password: str = Field(..., min_length=1)
 
-    @field_validator('email')
+    @field_validator("email")
     def validate_email_format(cls, v):
-        """Custom email validation"""
+        """Validate email format"""
         if not validate_email(v):
-            raise ValueError('Invalid email format. Please provide a valid email address.')
+            raise ValueError(
+                "Invalid email format. Please provide a valid email address."
+            )
         return v.lower().strip()
 
 
 class OTPVerificationRequest(BaseModel):
-    email: EmailStr
+    email: str = Field(..., min_length=3, max_length=255)
     otp: str = Field(..., min_length=6, max_length=6)
 
-    @field_validator('email')
+    @field_validator("email")
     def validate_email_format(cls, v):
-        """Custom email validation"""
+        """Validate email format"""
         if not validate_email(v):
-            raise ValueError('Invalid email format. Please provide a valid email address.')
+            raise ValueError(
+                "Invalid email format. Please provide a valid email address."
+            )
         return v.lower().strip()
-    
-    @field_validator('otp')
+
+    @field_validator("otp")
     def validate_otp_format(cls, v):
         """Validate OTP is 6 digits"""
         if not v.isdigit():
-            raise ValueError('OTP must contain only numbers')
+            raise ValueError("OTP must contain only numbers")
+        if len(v) != 6:
+            raise ValueError("OTP must be exactly 6 digits")
         return v
 
 
 class ForgotPasswordRequest(BaseModel):
-    email: EmailStr
+    email: str = Field(..., min_length=3, max_length=255)
 
-    @field_validator('email')
+    @field_validator("email")
     def validate_email_format(cls, v):
-        """Custom email validation"""
+        """Validate email format"""
         if not validate_email(v):
-            raise ValueError('Invalid email format. Please provide a valid email address.')
+            raise ValueError(
+                "Invalid email format. Please provide a valid email address."
+            )
         return v.lower().strip()
 
 
 class ResetPasswordRequest(BaseModel):
-    email: EmailStr
+    email: str = Field(..., min_length=3, max_length=255)
     otp: str = Field(..., min_length=6, max_length=6)
     new_password: str = Field(..., min_length=8, max_length=100)
 
-    @field_validator('email')
+    @field_validator("email")
     def validate_email_format(cls, v):
-        """Custom email validation"""
+        """Validate email format"""
         if not validate_email(v):
-            raise ValueError('Invalid email format. Please provide a valid email address.')
+            raise ValueError(
+                "Invalid email format. Please provide a valid email address."
+            )
         return v.lower().strip()
-    
-    @field_validator('otp')
+
+    @field_validator("otp")
     def validate_otp_format(cls, v):
         """Validate OTP is 6 digits"""
         if not v.isdigit():
-            raise ValueError('OTP must contain only numbers')
+            raise ValueError("OTP must contain only numbers")
+        if len(v) != 6:
+            raise ValueError("OTP must be exactly 6 digits")
         return v
 
-    @field_validator('new_password')
+    @field_validator("new_password")
     def validate_new_password(cls, v):
-        if len(v) < 8:
-            raise ValueError('Password must be at least 8 characters long')
-        if not re.search(r'[A-Za-z]', v):
-            raise ValueError('Password must contain at least one letter')
-        if not re.search(r'\d', v):
-            raise ValueError('Password must contain at least one number')
+        """Validate new password strength"""
+        result = validate_password_strength(v)
+
+        if not result["is_valid"]:
+            error_message = ". ".join(result["errors"])
+            raise ValueError(error_message)
+
         return v
 
 
@@ -124,7 +170,7 @@ class UserUpdateRequest(BaseModel):
     phone_number: Optional[str] = None
     profession: Optional[str] = Field(None, max_length=100)
     date_of_birth: Optional[date] = None
-    
+
     # Address fields
     province_name: Optional[str] = Field(None, max_length=100)
     city_name: Optional[str] = Field(None, max_length=100)
@@ -133,43 +179,61 @@ class UserUpdateRequest(BaseModel):
     detailed_address: Optional[str] = None
     assignment_location: Optional[str] = Field(None, max_length=255)
 
-    @field_validator('phone_number')
-    def validate_phone_number(cls, v):
+    @field_validator("phone_number")
+    def validate_phone(cls, v):
+        """Validate phone number jika diisi"""
         # Skip validation jika None atau empty string
         if v is None or v == "" or (isinstance(v, str) and v.strip() == ""):
             return None  # Ubah empty string jadi None
-        
+
         # Validasi hanya jika ada value
-        if not re.match(r'^08\d{8,13}$', v):
-            raise ValueError('Phone number must start with 08 and be 10-15 digits long')
+        if not validate_phone_number(v):
+            raise ValueError(
+                "Invalid phone number. Must start with 08 and be 10-15 digits long"
+            )
         return v
 
-    @field_validator('full_name', 'profession', 'province_name', 'city_name', 
-                     'district_name', 'village_name', 'detailed_address', 
-                     'assignment_location')
+    @field_validator(
+        "full_name",
+        "profession",
+        "province_name",
+        "city_name",
+        "district_name",
+        "village_name",
+        "detailed_address",
+        "assignment_location",
+    )
     def validate_string_fields(cls, v):
-        # Ubah empty string jadi None untuk semua string fields
+        """Ubah empty string jadi None untuk semua string fields"""
         if v is None or (isinstance(v, str) and v.strip() == ""):
             return None
         return v.strip() if isinstance(v, str) else v
 
-    @field_validator('date_of_birth', mode='before')
-    def validate_date_of_birth(cls, v):
+    @field_validator("date_of_birth", mode="before")
+    def validate_dob(cls, v):
+        """Validate date of birth jika diisi"""
         # Skip validation jika None atau empty string
         if v is None or v == "" or (isinstance(v, str) and v.strip() == ""):
             return None
-        
-        # Jika sudah date object, return langsung
+
+        # Jika sudah date object, validate
         if isinstance(v, date):
+            result = validate_date_of_birth(v)
+            if not result["is_valid"]:
+                raise ValueError(result["error"])
             return v
-            
-        # Jika string, parse
+
+        # Jika string, parse dulu
         if isinstance(v, str):
             try:
-                return datetime.strptime(v.strip(), "%Y-%m-%d").date()
+                parsed_date = datetime.strptime(v.strip(), "%Y-%m-%d").date()
+                result = validate_date_of_birth(parsed_date)
+                if not result["is_valid"]:
+                    raise ValueError(result["error"])
+                return parsed_date
             except ValueError:
-                raise ValueError('Date must be in YYYY-MM-DD format')
-        
+                raise ValueError("Date must be in YYYY-MM-DD format")
+
         return v
 
 
@@ -181,7 +245,7 @@ class UserResponse(BaseModel):
     profession: Optional[str]
     date_of_birth: Optional[date]
     photo_url: Optional[str]
-    
+
     # Address fields
     province_name: Optional[str]
     city_name: Optional[str]
@@ -189,7 +253,7 @@ class UserResponse(BaseModel):
     village_name: Optional[str]
     detailed_address: Optional[str]
     assignment_location: Optional[str]
-    
+
     is_active: bool
     created_at: datetime
     updated_at: datetime

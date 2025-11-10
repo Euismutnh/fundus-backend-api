@@ -5,4 +5,4 @@ from app.models.detection import Detection
 from app.models.token_blacklist import TokenBlacklist 
 
 
-__all__ = ["User", "Patient", "FundusImage", "Detection", "TokenBlacklist "]
+__all__ = ["User", "Patient", "FundusImage", "Detection", "TokenBlacklist"]
