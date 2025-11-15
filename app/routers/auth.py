@@ -3,7 +3,6 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from datetime import timedelta, datetime,timezone
 from typing import Optional
-from app.core.utils import validate_email
 from fastapi.security import HTTPAuthorizationCredentials
 
 from app.database import get_db
