@@ -1,10 +1,9 @@
-from pydantic import BaseModel, field_validator, Field
+from pydantic import BaseModel, field_validator, Field, EmailStr
 from datetime import date, datetime
 from typing import Optional
 
 # Import semua validator dari utils
 from app.core.utils import (
-    validate_email,
     validate_phone_number,
     validate_password_strength,
     validate_date_of_birth,
@@ -13,9 +12,7 @@ from app.core.utils import (
 
 class UserSignUpRequest(BaseModel):
     full_name: str = Field(..., min_length=2, max_length=255)
-    email: str = Field(
-        ..., min_length=3, max_length=255
-    )  # Plain string, bukan EmailStr
+    email: EmailStr
     password: str = Field(..., min_length=8, max_length=100)
     phone_number: Optional[str] = None
     profession: Optional[str] = Field(None, max_length=100)
@@ -28,19 +25,6 @@ class UserSignUpRequest(BaseModel):
     village_name: Optional[str] = Field(None, max_length=100)
     detailed_address: Optional[str] = None
     assignment_location: Optional[str] = Field(None, max_length=255)
-
-    @field_validator("email")
-    def validate_email_format(cls, v):
-        """
-        Validate email dengan custom rules yang ketat
-        Mendukung email perusahaan (e.g., user@company.co.id)
-        """
-        if not validate_email(v):
-            raise ValueError(
-                "Invalid email format. Email must have valid format "
-                "(e.g., user@example.com, admin@company.co.id)"
-            )
-        return v.lower().strip()  # Normalize: lowercase & remove whitespace
 
     @field_validator("phone_number")
     def validate_phone(cls, v):
@@ -81,31 +65,13 @@ class UserSignUpRequest(BaseModel):
 
 
 class UserSignInRequest(BaseModel):
-    email: str = Field(..., min_length=3, max_length=255)
+    email: EmailStr
     password: str = Field(..., min_length=1)
-
-    @field_validator("email")
-    def validate_email_format(cls, v):
-        """Validate email format"""
-        if not validate_email(v):
-            raise ValueError(
-                "Invalid email format. Please provide a valid email address."
-            )
-        return v.lower().strip()
 
 
 class OTPVerificationRequest(BaseModel):
-    email: str = Field(..., min_length=3, max_length=255)
+    email: EmailStr
     otp: str = Field(..., min_length=6, max_length=6)
-
-    @field_validator("email")
-    def validate_email_format(cls, v):
-        """Validate email format"""
-        if not validate_email(v):
-            raise ValueError(
-                "Invalid email format. Please provide a valid email address."
-            )
-        return v.lower().strip()
 
     @field_validator("otp")
     def validate_otp_format(cls, v):
@@ -118,31 +84,13 @@ class OTPVerificationRequest(BaseModel):
 
 
 class ForgotPasswordRequest(BaseModel):
-    email: str = Field(..., min_length=3, max_length=255)
-
-    @field_validator("email")
-    def validate_email_format(cls, v):
-        """Validate email format"""
-        if not validate_email(v):
-            raise ValueError(
-                "Invalid email format. Please provide a valid email address."
-            )
-        return v.lower().strip()
+    email: EmailStr
 
 
 class ResetPasswordRequest(BaseModel):
-    email: str = Field(..., min_length=3, max_length=255)
+    email: EmailStr
     otp: str = Field(..., min_length=6, max_length=6)
     new_password: str = Field(..., min_length=8, max_length=100)
-
-    @field_validator("email")
-    def validate_email_format(cls, v):
-        """Validate email format"""
-        if not validate_email(v):
-            raise ValueError(
-                "Invalid email format. Please provide a valid email address."
-            )
-        return v.lower().strip()
 
     @field_validator("otp")
     def validate_otp_format(cls, v):

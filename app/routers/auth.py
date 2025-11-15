@@ -45,11 +45,6 @@ async def signup(
     """
     Registrasi pengguna dengan manajemen transaksi yang benar.
     """
-    if not validate_email(email):
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Invalid email format. Please provide a valid email address."
-        )
     
     # Normalize email (lowercase + strip whitespace)
     email = email.lower().strip()

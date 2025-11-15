@@ -13,71 +13,71 @@ def generate_random_string(length: int = 32) -> str:
     )
 
 
-def validate_email(email: str) -> bool:
+# def validate_email(email: str) -> bool:
 
-    # Basic checks
-    if not email or not isinstance(email, str):
-        return False
+#     # Basic checks
+#     if not email or not isinstance(email, str):
+#         return False
 
-    # Remove leading/trailing whitespace
-    email = email.strip()
+#     # Remove leading/trailing whitespace
+#     email = email.strip()
 
-    # Must contain exactly one @
-    if email.count("@") != 1:
-        return False
+#     # Must contain exactly one @
+#     if email.count("@") != 1:
+#         return False
 
-    # Check for spaces
-    if " " in email:
-        return False
+#     # Check for spaces
+#     if " " in email:
+#         return False
 
-    # Split into local and domain parts
-    try:
-        local, domain = email.rsplit("@", 1)
-    except ValueError:
-        return False
+#     # Split into local and domain parts
+#     try:
+#         local, domain = email.rsplit("@", 1)
+#     except ValueError:
+#         return False
 
-    # Local part validation
-    if not local or len(local) > 64:  # RFC 5321
-        return False
+#     # Local part validation
+#     if not local or len(local) > 64:  # RFC 5321
+#         return False
 
-    # Local part cannot start or end with dot
-    if local.startswith(".") or local.endswith("."):
-        return False
+#     # Local part cannot start or end with dot
+#     if local.startswith(".") or local.endswith("."):
+#         return False
 
-    # No consecutive dots in local part
-    if ".." in local:
-        return False
+#     # No consecutive dots in local part
+#     if ".." in local:
+#         return False
 
-    # Local part pattern: must start with alphanumeric
-    local_pattern = r"^[a-zA-Z0-9][a-zA-Z0-9._%+-]*[a-zA-Z0-9]$|^[a-zA-Z0-9]$"
-    if not re.match(local_pattern, local):
-        return False
+#     # Local part pattern: must start with alphanumeric
+#     local_pattern = r"^[a-zA-Z0-9][a-zA-Z0-9._%+-]*[a-zA-Z0-9]$|^[a-zA-Z0-9]$"
+#     if not re.match(local_pattern, local):
+#         return False
 
-    # Domain validation
-    if not domain or len(domain) > 255:  # RFC 5321
-        return False
+#     # Domain validation
+#     if not domain or len(domain) > 255:  # RFC 5321
+#         return False
 
-    # Domain must contain at least one dot
-    if "." not in domain:
-        return False
+#     # Domain must contain at least one dot
+#     if "." not in domain:
+#         return False
 
-    # No consecutive dots in domain
-    if ".." in domain:
-        return False
+#     # No consecutive dots in domain
+#     if ".." in domain:
+#         return False
 
-    # Domain cannot start or end with dot or hyphen
-    if domain.startswith(".") or domain.endswith("."):
-        return False
-    if domain.startswith("-") or domain.endswith("-"):
-        return False
+#     # Domain cannot start or end with dot or hyphen
+#     if domain.startswith(".") or domain.endswith("."):
+#         return False
+#     if domain.startswith("-") or domain.endswith("-"):
+#         return False
 
-    # Domain pattern validation (support subdomain)
-    domain_pattern = r"^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$"
-    if not re.match(domain_pattern, domain):
-        return False
+#     # Domain pattern validation (support subdomain)
+#     domain_pattern = r"^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$"
+#     if not re.match(domain_pattern, domain):
+#         return False
 
-    # All checks passed
-    return True
+#     # All checks passed
+#     return True
 
 
 def validate_phone_number(phone: str) -> bool:
