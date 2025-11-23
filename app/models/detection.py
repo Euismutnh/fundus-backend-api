@@ -1,5 +1,5 @@
 from __future__ import annotations
-from sqlalchemy import String, Float, Text, DateTime, ForeignKey, Integer
+from sqlalchemy import String, Float, Text, DateTime, ForeignKey, Integer, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from datetime import datetime
@@ -13,7 +13,11 @@ if TYPE_CHECKING:
 
 class Detection(Base):
     __tablename__ = "detections"
-    __table_args__ = {'schema': 'schema_retinophaty'}
+    __table_args__ = (
+        Index('idx_detections_dashboard_date', 'user_id', 'detected_at'),
+        Index('idx_detections_dashboard_class', 'user_id', 'classification'),
+        {'schema': 'schema_retinophaty'}
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     patient_id: Mapped[int] = mapped_column(ForeignKey("schema_retinophaty.patients.id"), nullable=False)

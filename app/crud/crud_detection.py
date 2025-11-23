@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, func # ✅ Tambahkan func
 from datetime import datetime, timedelta, date
-from typing import Optional, List
+from typing import Optional, List, Dict # ✅ Tambahkan Dict
 from app.models.detection import Detection
 from app.models.fundus_image import FundusImage
 from app.models.patient import Patient
@@ -19,7 +19,6 @@ class DetectionCRUD:
         image_url: str,
         gcs_filename: str
     ) -> FundusImage:
-        """Create fundus image record"""
         db_image = FundusImage(
             patient_id=patient_id,
             user_id=user_id,
@@ -27,7 +26,6 @@ class DetectionCRUD:
             image_url=image_url,
             gcs_filename=gcs_filename
         )
-        
         db.add(db_image)
         db.flush()
         return db_image
@@ -42,9 +40,8 @@ class DetectionCRUD:
         confidence: float,
         description: Optional[str],
         detected_at: datetime,
-        age_at_detection: int  # Tambahkan parameter ini
+        age_at_detection: int
     ) -> Detection:
-        """Create detection record"""
         db_detection = Detection(
             patient_id=patient_id,
             fundus_image_id=fundus_image_id,
@@ -53,45 +50,27 @@ class DetectionCRUD:
             confidence=confidence,
             description=description,
             detected_at=detected_at,
-            age_at_detection=age_at_detection # Tambahkan ini
+            age_at_detection=age_at_detection
         )
-        
         db.add(db_detection)
         db.flush()
         return db_detection
 
     def get_detection_by_id_and_user(
-        self,
-        db: Session,
-        detection_id: int,
-        user_id: int
+        self, db: Session, detection_id: int, user_id: int
     ) -> Optional[Detection]:
-        """Get detection by ID and user_id (data isolation)"""
         stmt = select(Detection).where(
-            and_(
-                Detection.id == detection_id,
-                Detection.user_id == user_id
-            )
+            and_(Detection.id == detection_id, Detection.user_id == user_id)
         )
         return db.scalars(stmt).first()
 
     def get_detections_by_user(
-        self,
-        db: Session,
-        user_id: int,
-        classification: Optional[int] = None,
-        age_min: Optional[int] = None,
-        age_max: Optional[int] = None,
-        gender: Optional[str] = None,
-        period: Optional[str] = None,
-        patient_code: Optional[str] = None,
-        skip: int = 0,
-        limit: int = 100
+        self, db: Session, user_id: int, classification: Optional[int] = None,
+        age_min: Optional[int] = None, age_max: Optional[int] = None,
+        gender: Optional[str] = None, period: Optional[str] = None,
+        patient_code: Optional[str] = None, skip: int = 0, limit: int = 100
     ) -> List[Detection]:
-        """Get detections with filters (data isolation)"""
-        stmt = select(Detection).join(Patient).where(
-            Detection.user_id == user_id
-        )
+        stmt = select(Detection).join(Patient).where(Detection.user_id == user_id)
 
         if classification is not None:
             stmt = stmt.where(Detection.classification == classification)
@@ -124,51 +103,62 @@ class DetectionCRUD:
         stmt = stmt.order_by(Detection.detected_at.desc()).offset(skip).limit(limit)
         return list(db.scalars(stmt).all())
 
-    # === FUNGSI INI DIPERBARUI ===
     def get_all_detections_for_patient(
-        self,
-        db: Session,
-        patient_id: int,
-        user_id: int  # ← TAMBAHKAN parameter ini
+        self, db: Session, patient_id: int, user_id: int
     ) -> List[Detection]:
-        """Get ALL detections for a specific patient ID (with data isolation)."""
         stmt = select(Detection).where(
-            and_(  # ← GUNAKAN and_
-                Detection.patient_id == patient_id,
-                Detection.user_id == user_id  # ← VALIDASI user_id
-            )
+            and_(Detection.patient_id == patient_id, Detection.user_id == user_id)
         ).order_by(Detection.detected_at.asc())
         return list(db.scalars(stmt).all())
 
-    def delete_detection(
-        self,
-        db: Session,
-        detection: Detection
-    ) -> bool:
-        """Delete detection and associated fundus image"""
+    def delete_detection(self, db: Session, detection: Detection) -> bool:
         try:
             stmt = select(FundusImage).where(FundusImage.id == detection.fundus_image_id)
             fundus_image = db.scalars(stmt).first()
-            
             db.delete(detection)
-            
             if fundus_image:
                 db.delete(fundus_image)
-            
             db.commit()
             return True
         except Exception:
             db.rollback()
             return False
 
-    def count_detections_by_user(
-        self,
-        db: Session,
-        user_id: int
-    ) -> int:
+    def count_detections_by_user(self, db: Session, user_id: int) -> int:
         """Count total detections for a user"""
-        from sqlalchemy import func
         stmt = select(func.count(Detection.id)).where(Detection.user_id == user_id)
         return db.scalar(stmt) or 0
+    
+    def count_detections_today(self, db: Session, user_id: int) -> int:
+        """Count detections made today (since 00:00)"""
+        today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        
+        stmt = select(func.count(Detection.id)).where(
+            and_(
+                Detection.user_id == user_id,
+                Detection.detected_at >= today_start
+            )
+        )
+        return db.scalar(stmt) or 0
 
+    def get_breakdown_by_classification(self, db: Session, user_id: int) -> dict:
+        """Get breakdown of detections by classification (0-4)"""
+        stmt = select(
+            Detection.classification,
+            func.count(Detection.id).label('count')
+        ).where(
+            Detection.user_id == user_id
+        ).group_by(Detection.classification)
+        
+        results = db.execute(stmt).all()
+        
+        breakdown = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0}
+        
+        for classification, count in results:
+            if classification in breakdown:
+                breakdown[classification] = count
+        
+        return breakdown
+
+# Global instance
 detection_crud = DetectionCRUD()

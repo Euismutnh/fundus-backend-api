@@ -13,7 +13,7 @@ from app.core.exceptions import (
     integrity_exception_handler,
     general_exception_handler
 )
-from app.routers import auth, users, patients, detections
+from app.routers import auth, users, patients, detections, dashboard
 from app.database import engine, Base
 from app.core.admin import setup_admin
 
@@ -61,6 +61,7 @@ app.include_router(auth.router, prefix=settings.API_V1_STR)
 app.include_router(users.router, prefix=settings.API_V1_STR)
 app.include_router(patients.router, prefix=settings.API_V1_STR)
 app.include_router(detections.router, prefix=settings.API_V1_STR)
+app.include_router(dashboard.router, prefix=settings.API_V1_STR)
 
 # ===================================
 # Setup Admin Panel

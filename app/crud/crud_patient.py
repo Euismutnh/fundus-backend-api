@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, func  
 from datetime import date, datetime
 from typing import Optional, List
 from app.models.patient import Patient
@@ -122,6 +122,14 @@ class PatientCRUD:
             age -= 1
         
         return age
+    
+    def count_patients_by_user(self, db: Session, user_id: int) -> int:
+        """Count total patients for a specific user"""
+        # Tidak perlu import func lagi di dalam fungsi, sudah di atas
+        stmt = select(func.count(Patient.id)).where(
+            Patient.created_by_user_id == user_id
+        )
+        return db.scalar(stmt) or 0
 
 # Create global CRUD instance
 patient_crud = PatientCRUD()
