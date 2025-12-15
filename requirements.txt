@@ -11,7 +11,7 @@ anyio==4.11.0
     #   httpx
     #   starlette
     #   watchfiles
-bcrypt==4.1.3
+bcrypt==4.0.1
     # via
     #   -r requirements.in
     #   passlib
