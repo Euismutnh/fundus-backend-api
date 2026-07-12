@@ -99,6 +99,7 @@ async def start_detection(
 
     # 5. Create session and store temporarily
     session_id = session_manager.create_session(
+        db=db,
         user_id=current_user.id,
         patient_id=patient.id,
         patient_code=patient.patient_code,
@@ -172,7 +173,7 @@ async def save_detection(
     session_id = request.session_id
     
     # 1. Retrieve session data
-    session_data = session_manager.get_session(session_id)
+    session_data = session_manager.get_session(db, session_id)
     if not session_data:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -193,7 +194,7 @@ async def save_detection(
     if not patient:
         # Cleanup: Delete image and session
         gcs_service.delete_file(session_data['gcs_filename'])
-        session_manager.delete_session(session_id)
+        session_manager.delete_session(db, session_id)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Patient not found. It may have been deleted."
@@ -227,7 +228,7 @@ async def save_detection(
         db.commit()
         
         # 5. Cleanup: Remove session from temporary storage
-        session_manager.delete_session(session_id)
+        session_manager.delete_session(db, session_id)
         
         return MessageResponse(
             message="Detection saved successfully!",
@@ -249,7 +250,8 @@ async def save_detection(
 @router.delete("/cancel/{session_id}", response_model=MessageResponse)
 async def cancel_detection(
     session_id: str,
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
 ):
     """
     Cancel detection and cleanup temporary data
@@ -270,7 +272,7 @@ async def cancel_detection(
     """
     
     # 1. Retrieve session data
-    session_data = session_manager.get_session(session_id)
+    session_data = session_manager.get_session(db, session_id)
     if not session_data:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -292,7 +294,7 @@ async def cancel_detection(
         print(f"Warning: Failed to delete file {session_data['gcs_filename']}: {str(e)}")
     
     # 4. Remove session from temporary storage
-    session_manager.delete_session(session_id)
+    session_manager.delete_session(db, session_id)
     
     return MessageResponse(
         message="Detection cancelled successfully",
