@@ -1,3 +1,4 @@
+import logging
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
@@ -23,6 +24,7 @@ from app.core.gcs_service import gcs_service
 from app.models.user import User
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+logger = logging.getLogger(__name__)
 
 @router.post("/signup", response_model=MessageResponse)
 async def signup(
@@ -49,12 +51,20 @@ async def signup(
     email = email.lower().strip()
     
     # 1. Pengecekan awal di luar transaksi
-    if user_crud.is_email_exists(db, email):
+    # Email yang dipakai akun aktif memang harus ditolak
+    if user_crud.get_active_user_by_email(db, email):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered"
         )
-    
+
+    # Email yang dipakai registrasi belum diverifikasi tidak boleh mengunci
+    # slot tersebut selamanya -- bersihkan dan izinkan daftar ulang
+    stale_user = user_crud.get_unverified_user_by_email(db, email)
+    if stale_user:
+        user_crud.purge_unverified_user(db, stale_user)
+        logger.info(f"Registrasi belum terverifikasi untuk {email} dibersihkan, daftar ulang diizinkan")
+
     # 2. Validasi dan persiapan data dari Form
     parsed_date = None
     if date_of_birth:
@@ -531,8 +541,8 @@ async def resend_otp(
         )
 
 @router.get("/me", response_model=UserResponse)
-async def get_current_user_profile(
-    current_user: User = Depends(get_current_active_user)
+async def get_my_profile(
+    current_user: UserResponse = Depends(get_current_active_user)
 ):
     """
     Get current user profile

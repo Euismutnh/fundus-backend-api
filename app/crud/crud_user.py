@@ -1,11 +1,14 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from app.models.user import User
 from app.schemas.user_schema import UserSignUpRequest, UserUpdateRequest
 from app.core.security import get_password_hash, verify_password, is_otp_valid
 from app.core.email_service import email_service
+
+# Batas hidup registrasi yang belum diverifikasi OTP
+UNVERIFIED_TTL_MINUTES = 10
 
 class UserCRUD:
     def __init__(self):
@@ -137,6 +140,38 @@ class UserCRUD:
     def is_email_exists(self, db: Session, email: str) -> bool:
         """Check if email already exists"""
         return db.query(User).filter(User.email == email).first() is not None
+
+    def get_active_user_by_email(self, db: Session, email: str) -> Optional[User]:
+        """Cari user yang SUDAH aktif saja (untuk cek email benar-benar terpakai)."""
+        return db.query(User).filter(
+            User.email == email,
+            User.is_active == True
+        ).first()
+
+    def get_unverified_user_by_email(self, db: Session, email: str) -> Optional[User]:
+        """Cari registrasi yang BELUM diverifikasi."""
+        return db.query(User).filter(
+            User.email == email,
+            User.is_active == False
+        ).first()
+
+    def purge_unverified_user(self, db: Session, user: User) -> None:
+        """Hapus permanen registrasi yang tidak pernah diverifikasi."""
+        db.delete(user)
+        db.commit()
+
+    def cleanup_stale_registrations(self, db: Session) -> int:
+        """
+        Hapus semua registrasi belum aktif yang OTP-nya sudah lewat TTL.
+        Aman dipanggil berkala -- hanya menyentuh akun is_active = False.
+        """
+        cutoff = datetime.now(timezone.utc) - timedelta(minutes=UNVERIFIED_TTL_MINUTES)
+        deleted = db.query(User).filter(
+            User.is_active == False,
+            User.created_at < cutoff
+        ).delete(synchronize_session=False)
+        db.commit()
+        return deleted
 
     def resend_otp(self, db: Session, user: User) -> User:
         """Generate and update new OTP for user"""
