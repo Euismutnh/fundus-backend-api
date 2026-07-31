@@ -6,9 +6,20 @@
 FROM python:3.12-slim
 
 # 2. Set environment variables
+#
+# WEB_CONCURRENCY: FastAPI berjalan async, sehingga satu worker per instance
+#   sudah dapat melayani banyak request bersamaan; penskalaan diserahkan ke
+#   Cloud Run. Satu worker juga membuat state rate limiter konsisten di dalam
+#   instance. Naikkan hanya bila instance dialokasikan lebih dari satu vCPU.
+#
+# GUNICORN_TIMEOUT: harus di atas timeout klien AI (60 detik, lihat
+#   app/core/ai_service.py) agar cold start layanan AI menghasilkan error yang
+#   tertangani aplikasi, bukan worker yang dibunuh gunicorn di tengah jalan.
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PORT=8080
+    PORT=8080 \
+    WEB_CONCURRENCY=1 \
+    GUNICORN_TIMEOUT=120
 
 # 3. Install compiler
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -42,4 +53,9 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 
 # 10. Run application (PERUBAHAN 2)
 #     Kita panggil 'app.main:app'
-CMD exec gunicorn -b "0.0.0.0:${PORT}" -w 4 -k uvicorn.workers.UvicornWorker app.main:app
+CMD exec gunicorn -b "0.0.0.0:${PORT}" \
+    -w "${WEB_CONCURRENCY}" \
+    -k uvicorn.workers.UvicornWorker \
+    --timeout "${GUNICORN_TIMEOUT}" \
+    --graceful-timeout 30 \
+    app.main:app

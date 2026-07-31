@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy.exc import IntegrityError
 from starlette.middleware.sessions import SessionMiddleware
+import logging
 import uvicorn
 import os
 
@@ -18,6 +19,16 @@ from app.database import engine, Base
 from app.core.admin import setup_admin
 
 # ===================================
+# Logging
+# ===================================
+# Dikonfigurasi di sini, bukan sebagai efek samping saat modul di-import, agar
+# hanya ada satu tempat yang mengatur logging untuk seluruh aplikasi.
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s %(message)s"
+)
+
+# ===================================
 # Initialize FastAPI app
 # ===================================
 app = FastAPI(
@@ -31,10 +42,27 @@ app = FastAPI(
 # ===================================
 # Add Middleware
 # ===================================
+# Urutan penting. add_middleware menaruh yang ditambahkan TERAKHIR di lapisan
+# TERLUAR, sehingga urutan pemrosesan request menjadi:
+#
+#     CORS -> Security -> RateLimit -> Session -> router
+#
+# CORS diletakkan terluar agar setiap respons, termasuk 429 dari rate limiter
+# dan respons error lainnya, tetap membawa header CORS; tanpa ini klien web
+# hanya melihat error CORS dan tidak pernah tahu bahwa dirinya kena 429.
+# Security berada di atas RateLimit agar respons 429 pun tetap memperoleh
+# security header dan tercatat di access log. RateLimit tetap berada sebelum
+# routing dan sebelum pekerjaan basis data apa pun.
 app.add_middleware(
     SessionMiddleware,
     secret_key=settings.ADMIN_SECRET_KEY or settings.SECRET_KEY
 )
+
+# Batas diambil dari settings agar dapat disesuaikan per environment tanpa
+# mengubah kode, termasuk saat pengujian beban.
+app.add_middleware(RateLimitMiddleware)
+
+app.add_middleware(SecurityMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
@@ -42,10 +70,8 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-Request-ID", "Retry-After"],
 )
-
-app.add_middleware(SecurityMiddleware)
-app.add_middleware(RateLimitMiddleware, calls=100, period=60)
 
 # ===================================
 # Exception Handlers

@@ -19,11 +19,18 @@ else:
     # PostgreSQL configuration (for production)
     engine = create_engine(
         DATABASE_URL,
-        pool_size=10,
-        max_overflow=20,
-        pool_recycle=3600,
+        pool_size=settings.DB_POOL_SIZE,
+        max_overflow=settings.DB_MAX_OVERFLOW,
+        # Gagal cepat ketika pool habis, agar beban berlebih terlihat sebagai
+        # error yang jelas dan bukan sebagai request yang menggantung.
+        pool_timeout=settings.DB_POOL_TIMEOUT,
+        # Daur ulang koneksi sebelum sempat diputus diam-diam oleh infrastruktur.
+        pool_recycle=settings.DB_POOL_RECYCLE,
         pool_pre_ping=True,
-        echo=True  # Set to True for SQL debugging
+        # Echo hanya untuk debugging lokal. Menyalakannya di produksi menuliskan
+        # setiap statement SQL ke Cloud Logging pada setiap request: latensi naik
+        # signifikan dan isi query, termasuk data pasien, ikut tercetak ke log.
+        echo=settings.SQL_ECHO
     )
 
 # Create SessionLocal class

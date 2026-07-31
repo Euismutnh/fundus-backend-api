@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import select, and_, func # ✅ Tambahkan func
+from sqlalchemy import select, and_, func 
 from datetime import datetime, timedelta, date
-from typing import Optional, List, Dict # ✅ Tambahkan Dict
+from typing import Optional, List, Dict 
 from app.models.detection import Detection
 from app.models.fundus_image import FundusImage
 from app.models.patient import Patient
@@ -162,3 +162,4 @@ class DetectionCRUD:
 
 # Global instance
 detection_crud = DetectionCRUD()
+
