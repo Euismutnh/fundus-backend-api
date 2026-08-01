@@ -136,7 +136,7 @@ async def signup(
         )
 
 @router.post("/verify-otp", response_model=TokenResponse)
-async def verify_otp(
+def verify_otp(
     request: OTPVerificationRequest,
     db: Session = Depends(get_db)
 ):
@@ -227,7 +227,7 @@ async def signin_step1(
         )
 
 @router.post("/signin/verify-otp", response_model=TokenResponse)
-async def signin_step2(
+def signin_step2(
     request: OTPVerificationRequest,
     db: Session = Depends(get_db)
 ):
@@ -270,7 +270,7 @@ async def signin_step2(
             detail=f"OTP verification failed: {str(e)}"
         )
 @router.post("/refresh", response_model=TokenResponse)
-async def refresh_access_token(
+def refresh_access_token(
     refresh_token: str = Body(..., embed=True),
     db: Session = Depends(get_db)
 ):
@@ -396,7 +396,7 @@ async def forgot_password(
         )
 
 @router.post("/reset-password", response_model=MessageResponse)
-async def reset_password(
+def reset_password(
     request: ResetPasswordRequest,
     db: Session = Depends(get_db)
 ):
@@ -432,7 +432,7 @@ async def reset_password(
         )
 
 @router.post("/signout", response_model=MessageResponse)
-async def signout(
+def signout(
     credentials: HTTPAuthorizationCredentials = Depends(security),
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
@@ -541,7 +541,7 @@ async def resend_otp(
         )
 
 @router.get("/me", response_model=UserResponse)
-async def get_my_profile(
+def get_my_profile(
     current_user: UserResponse = Depends(get_current_active_user)
 ):
     """
@@ -595,7 +595,7 @@ async def update_profile_photo(
         )
 
 @router.delete("/delete-profile-photo", response_model=MessageResponse)
-async def delete_profile_photo(
+def delete_profile_photo(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):

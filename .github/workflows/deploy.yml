@@ -89,7 +89,7 @@ jobs:
             --max-instances=10 \
             --timeout=300 \
             --port=8080 \
-            --set-env-vars="^##^PROJECT_NAME=Fundus AI Backend##API_V1_STR=/api/v1##DATABASE_URL=${{ secrets.DATABASE_URL }}##SECRET_KEY=${{ secrets.SECRET_KEY }}##ACCESS_TOKEN_EXPIRE_MINUTES=${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }}##REFRESH_TOKEN_EXPIRE_DAYS=${{ secrets.REFRESH_TOKEN_EXPIRE_DAYS }}##ADMIN_SECRET_KEY=${{ secrets.ADMIN_SECRET_KEY }}##ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }}##ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}##SMTP_SERVER=smtp.gmail.com##SMTP_PORT=587##SMTP_USERNAME=${{ secrets.SMTP_USERNAME }}##SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }}##SENDER_EMAIL=${{ secrets.SMTP_USERNAME }}##AI_SERVICE_URL=https://fundus-api-service-165772118694.asia-southeast2.run.app##GCS_BUCKET_NAME=${{ secrets.GCS_BUCKET_NAME }}##ENVIRONMENT=production"
+            --set-env-vars="^##^PROJECT_NAME=Fundus AI Backend##API_V1_STR=/api/v1##DATABASE_URL=${{ secrets.DATABASE_URL }}##SECRET_KEY=${{ secrets.SECRET_KEY }}##ACCESS_TOKEN_EXPIRE_MINUTES=${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }}##REFRESH_TOKEN_EXPIRE_DAYS=${{ secrets.REFRESH_TOKEN_EXPIRE_DAYS }}##ADMIN_SECRET_KEY=${{ secrets.ADMIN_SECRET_KEY }}##ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }}##ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}##SMTP_SERVER=smtp.gmail.com##SMTP_PORT=587##SMTP_USERNAME=${{ secrets.SMTP_USERNAME }}##SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }}##SENDER_EMAIL=${{ secrets.SMTP_USERNAME }}##AI_SERVICE_URL=https://fundus-api-service-165772118694.asia-southeast2.run.app##GCS_BUCKET_NAME=${{ secrets.GCS_BUCKET_NAME }}##ENVIRONMENT=production##RATE_LIMIT_ENABLED=true##SQL_ECHO=false"
           
           echo "✅ Deployment completed successfully"
 

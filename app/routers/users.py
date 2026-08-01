@@ -12,7 +12,7 @@ from app.models.user import User
 router = APIRouter(prefix="/users", tags=["Users"])
 
 @router.get("/me", response_model=UserResponse)
-async def get_my_profile(
+def get_my_profile(
     current_user: UserResponse = Depends(get_current_active_user)
 ):
     """
@@ -21,7 +21,7 @@ async def get_my_profile(
     return current_user
 
 @router.patch("/me", response_model=UserResponse)
-async def update_my_profile(
+def update_my_profile(
     update_data: UserUpdateRequest,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)

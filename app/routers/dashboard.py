@@ -12,7 +12,7 @@ router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 
 
 @router.get("/stats", response_model=DashboardStatsResponse)
-async def get_dashboard_stats(
+def get_dashboard_stats(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):

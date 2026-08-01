@@ -145,7 +145,7 @@ async def start_detection(
 # ========================================================================
 
 @router.post("/save", response_model=MessageResponse)
-async def save_detection(
+def save_detection(
     request: DetectionSaveRequestNew,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
@@ -248,7 +248,7 @@ async def save_detection(
 # ========================================================================
 
 @router.delete("/cancel/{session_id}", response_model=MessageResponse)
-async def cancel_detection(
+def cancel_detection(
     session_id: str,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
@@ -307,7 +307,7 @@ async def cancel_detection(
 # ========================================================================
 
 @router.get("/", response_model=List[DetectionResponse])
-async def get_detections(
+def get_detections(
     classification: Optional[int] = None,
     age_min: Optional[int] = None,
     age_max: Optional[int] = None,
@@ -349,7 +349,7 @@ async def get_detections(
 
 
 @router.get("/{detection_id}", response_model=DetectionDetailResponse)
-async def get_detection_detail(
+def get_detection_detail(
     detection_id: int,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
@@ -379,7 +379,7 @@ async def get_detection_detail(
 
 
 @router.delete("/{detection_id}", response_model=MessageResponse)
-async def delete_detection(
+def delete_detection(
     detection_id: int,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
@@ -402,7 +402,7 @@ async def delete_detection(
 
 
 @router.get("/patients/{patient_id}/progress-chart", response_model=ProgressChartResponse)
-async def get_patient_progress_chart(
+def get_patient_progress_chart(
     patient_id: int,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)

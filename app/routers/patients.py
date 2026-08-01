@@ -16,7 +16,7 @@ from app.crud.crud_patient import patient_crud
 router = APIRouter(prefix="/patients", tags=["Patients"])
 
 @router.post("/", response_model=PatientResponse, status_code=status.HTTP_201_CREATED)
-async def create_patient(
+def create_patient(
     patient_data: PatientCreateRequest,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
@@ -37,7 +37,7 @@ async def create_patient(
     return patient
 
 @router.get("/{patient_code}", response_model=PatientWithAgeResponse)
-async def get_patient_by_code(
+def get_patient_by_code(
     patient_code: str,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
@@ -70,7 +70,7 @@ async def get_patient_by_code(
     return patient_dict
 
 @router.get("/", response_model=List[PatientWithAgeResponse])
-async def get_all_patients(
+def get_all_patients(
     skip: int = 0,
     limit: int = 100,
     current_user: User = Depends(get_current_active_user),
@@ -99,7 +99,7 @@ async def get_all_patients(
     return patients_with_age
 
 @router.put("/{patient_code}", response_model=PatientResponse)
-async def update_patient(
+def update_patient(
     patient_code: str,
     patient_data: PatientUpdateRequest,
     current_user: User = Depends(get_current_active_user),
@@ -119,7 +119,7 @@ async def update_patient(
     return updated_patient
 
 @router.delete("/{patient_code}", response_model=MessageResponse)
-async def delete_patient(
+def delete_patient(
     patient_code: str,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
