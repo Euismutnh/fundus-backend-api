@@ -162,4 +162,3 @@ class DetectionCRUD:
 
 # Global instance
 detection_crud = DetectionCRUD()
-
