@@ -1,5 +1,5 @@
-from sqlalchemy.orm import Session
-from sqlalchemy import select, and_, func 
+from sqlalchemy.orm import Session, contains_eager, joinedload
+from sqlalchemy import select, and_, func
 from datetime import datetime, timedelta, date
 from typing import Optional, List, Dict 
 from app.models.detection import Detection
@@ -70,7 +70,28 @@ class DetectionCRUD:
         gender: Optional[str] = None, period: Optional[str] = None,
         patient_code: Optional[str] = None, skip: int = 0, limit: int = 100
     ) -> List[Detection]:
-        stmt = select(Detection).join(Patient).where(Detection.user_id == user_id)
+        # Relasi patient dan fundus_image dimuat sekaligus di query ini.
+        #
+        # Tanpa ini, router mengakses detection.patient dan
+        # detection.fundus_image untuk setiap baris, dan karena keduanya relasi
+        # lazy, tiap akses memicu query tersendiri: 1 + 2N query untuk N baris.
+        #
+        # contains_eager dipakai untuk patient karena tabelnya SUDAH di-join di
+        # bawah demi keperluan filter gender/kode pasien/umur, sehingga kolomnya
+        # tinggal diambil dari hasil join itu. joinedload dipakai untuk
+        # fundus_image karena tabelnya belum ikut di-join.
+        #
+        # Keduanya relasi many-to-one, jadi tiap detection tetap menghasilkan
+        # tepat satu baris dan LIMIT di bawah tetap berlaku sebagaimana mestinya.
+        stmt = (
+            select(Detection)
+            .join(Detection.patient)
+            .options(
+                contains_eager(Detection.patient),
+                joinedload(Detection.fundus_image),
+            )
+            .where(Detection.user_id == user_id)
+        )
 
         if classification is not None:
             stmt = stmt.where(Detection.classification == classification)
